@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -21,7 +20,6 @@ if uploaded:
     st.subheader("📌 Pratinjau Dataset")
     st.dataframe(df)
 
-    # Clustering
     st.subheader("🎯 Clustering Pelanggan (K-Means)")
     X = df[['Age','Annual Income (k$)','Spending Score (1-100)']]
     scaler = StandardScaler()
@@ -52,7 +50,10 @@ if uploaded:
     rf.fit(X_train, y_train)
     pred = rf.predict(X_test)
 
-    st.write("📉 RMSE:", mean_squared_error(y_test, pred, squared=False))
+    mse = mean_squared_error(y_test, pred)
+    rmse = mse ** 0.5
+
+    st.write("📉 RMSE:", rmse)
     st.write("📈 R²:", r2_score(y_test, pred))
 
     st.subheader("🧮 Prediksi Berdasarkan Input Pengguna")
