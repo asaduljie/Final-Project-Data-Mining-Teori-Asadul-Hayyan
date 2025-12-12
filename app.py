@@ -34,11 +34,16 @@ if uploaded:
         color='Cluster:N',
         tooltip=['Age','Annual Income (k$)','Spending Score (1-100)','Cluster']
     ).interactive()
-
     st.altair_chart(chart, use_container_width=True)
 
     st.subheader("📊 Statistik Tiap Cluster")
-    st.write(df.groupby('Cluster')[['Age','Annual Income (k$)','Spending Score (1-100)']].mean())
+    cluster_stats = (
+        df.groupby('Cluster')[['Age','Annual Income (k$)','Spending Score (1-100)']]
+        .mean()
+        .reset_index()
+    )
+    cluster_stats['Age'] = cluster_stats['Age'].round(0).astype(int)
+    st.dataframe(cluster_stats)
 
     st.subheader("🤖 Prediksi Spending Score (Random Forest)")
     Xr = df[['Age','Annual Income (k$)']]
@@ -62,4 +67,14 @@ if uploaded:
 
     if st.button("🔮 Prediksi Spending Score"):
         hasil = rf.predict([[age, income]])
-        st.success(f"✨ Perkiraan Spending Score: {hasil[0]:.2f}")
+        score = hasil[0]
+
+        if score < 40:
+            komentar = "Pelanggan memiliki tingkat pembelanjaan yang rendah."
+        elif score < 70:
+            komentar = "Pelanggan memiliki tingkat pembelanjaan sedang/normal."
+        else:
+            komentar = "Pelanggan merupakan pelanggan dengan spending tinggi (loyal/premium)."
+
+        st.success(f"✨ Perkiraan Spending Score: {score:.2f}")
+        st.info(f"📌 **Interpretasi:** {komentar}")
