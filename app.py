@@ -34,6 +34,7 @@ if uploaded:
         color='Cluster:N',
         tooltip=['Age','Annual Income (k$)','Spending Score (1-100)','Cluster']
     ).interactive()
+
     st.altair_chart(chart, use_container_width=True)
 
     st.subheader("📊 Statistik Tiap Cluster")
@@ -42,7 +43,11 @@ if uploaded:
         .mean()
         .reset_index()
     )
+
     cluster_stats['Age'] = cluster_stats['Age'].round(0).astype(int)
+    cluster_stats['Annual Income (k$)'] = cluster_stats['Annual Income (k$)'].round(2)
+    cluster_stats['Spending Score (1-100)'] = cluster_stats['Spending Score (1-100)'].round(2)
+
     st.dataframe(cluster_stats)
 
     st.subheader("🤖 Prediksi Spending Score (Random Forest)")
@@ -77,4 +82,4 @@ if uploaded:
             komentar = "Pelanggan merupakan pelanggan dengan spending tinggi (loyal/premium)."
 
         st.success(f"✨ Perkiraan Spending Score: {score:.2f}")
-        st.info(f"📌 **Interpretasi:** {komentar}")
+        st.info(f"📌 Interpretasi: {komentar}")
