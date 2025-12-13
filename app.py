@@ -43,7 +43,7 @@ if uploaded:
 
     st.subheader("📊 Profil Rata-Rata Tiap Cluster")
     cluster_stats = (
-        df.groupby('Cluster')[['Age','Annual Income (k$)','Spending Score (1-100)']]
+        df.groupby('Cluster')[['Age','Annual Income (k$)']]
         .mean()
         .round(2)
         .reset_index()
