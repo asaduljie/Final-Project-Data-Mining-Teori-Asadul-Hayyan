@@ -125,13 +125,13 @@ if uploaded:
             level = "tinggi"
 
         if cluster_result == 0:
-            profil = "pelanggan usia muda dengan pendapatan menengah"
+            profil = "pelanggan dengan pendapatan menengah"
         elif cluster_result == 1:
             profil = "pelanggan berpendapatan tinggi"
         elif cluster_result == 2:
-            profil = "pelanggan usia lebih tua dengan pendapatan menengah ke bawah"
+            profil = "pelanggan dengan pendapatan menengah ke bawah"
         else:
-            profil = "pelanggan usia menengah dengan pendapatan tinggi"
+            profil = "pelanggan dengan pendapatan tinggi"
 
         st.info(
             f"📌 **Kesimpulan:** Pelanggan ini termasuk {profil} "
