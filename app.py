@@ -1,65 +1,59 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-st.set_page_config(page_title="Analisis Pelanggan Mall", page_icon="🛍️", layout="wide")
+# ===============================
+# KONFIGURASI HALAMAN
+# ===============================
+st.set_page_config(
+    page_title="Analisis Pelanggan Mall",
+    page_icon="🛍️",
+    layout="wide"
+)
 
 st.title("🛍️ Analisis Pelanggan Mall")
 st.write("""
-Aplikasi ini menampilkan **segmentasi pelanggan (clustering)** dan  
-**prediksi Spending Score (regresi)** sebagai dua analisis yang terpisah.
+Aplikasi ini melakukan **analisis gabungan**:
+- **Clustering** untuk segmentasi pelanggan
+- **Regresi** untuk memprediksi Spending Score  
+berdasarkan **satu input pengguna**.
 """)
 
-uploaded = st.file_uploader("📂 Unggah dataset Mall_Customers.csv", type=["csv"])
+# ===============================
+# UPLOAD DATA
+# ===============================
+uploaded = st.file_uploader(
+    "📂 Unggah dataset Mall_Customers.csv",
+    type=["csv"]
+)
 
 if uploaded:
     df = pd.read_csv(uploaded)
 
     st.subheader("📌 Pratinjau Dataset")
-    st.dataframe(df)
+    st.dataframe(df, use_container_width=True)
 
-    st.subheader("🎯 Segmentasi Pelanggan (K-Means Clustering)")
+    # ===============================
+    # ====== CLUSTERING MODEL ======
+    # ===============================
+    X_cluster = df[['Age', 'Annual Income (k$)']]
 
-    X_cluster = df[['Age','Annual Income (k$)']]
     scaler = StandardScaler()
-    Xs = scaler.fit_transform(X_cluster)
+    X_scaled = scaler.fit_transform(X_cluster)
 
-    km = KMeans(n_clusters=4, random_state=42)
-    df['Cluster'] = km.fit_predict(Xs)
+    kmeans = KMeans(n_clusters=4, random_state=42)
+    df['Cluster'] = kmeans.fit_predict(X_scaled)
 
-    chart = alt.Chart(df).mark_circle(size=80).encode(
-        x='Annual Income (k$)',
-        y='Age',
-        color='Cluster:N',
-        tooltip=['Age','Annual Income (k$)','Spending Score (1-100)','Cluster']
-    ).interactive()
-
-    st.altair_chart(chart, use_container_width=True)
-
-    st.subheader("📊 Profil Rata-Rata Tiap Cluster")
-    cluster_stats = (
-        df.groupby('Cluster')[['Age','Annual Income (k$)']]
-        .mean()
-        .round(2)
-        .reset_index()
-    )
-
-    st.dataframe(cluster_stats)
-
-    st.info("""
-    🔍 **Catatan:**  
-    Clustering dilakukan hanya menggunakan **Age** dan **Annual Income**  
-    untuk menghindari kebocoran data (data leakage).
-    """)
-    
-    st.subheader("🤖 Prediksi Spending Score (Random Forest Regression)")
-
-    Xr = df[['Age','Annual Income (k$)']]
+    # ===============================
+    # ====== REGRESSION MODEL ======
+    # ===============================
+    Xr = df[['Age', 'Annual Income (k$)']]
     yr = df['Spending Score (1-100)']
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -70,31 +64,88 @@ if uploaded:
         n_estimators=300,
         random_state=42
     )
-
     rf.fit(X_train, y_train)
-    pred = rf.predict(X_test)
 
-    rmse = mean_squared_error(y_test, pred) ** 0.5
-    r2 = r2_score(y_test, pred)
+    # ===============================
+    # VISUALISASI CLUSTER
+    # ===============================
+    st.subheader("🎯 Visualisasi Segmentasi Pelanggan")
 
-    st.write(f"📉 **RMSE**: {rmse:.2f}")
-    st.write(f"📈 **R² Score**: {r2:.3f}")
+    chart = alt.Chart(df).mark_circle(size=90).encode(
+        x='Annual Income (k$)',
+        y='Age',
+        color='Cluster:N',
+        tooltip=[
+            'Age',
+            'Annual Income (k$)',
+            'Spending Score (1-100)',
+            'Cluster'
+        ]
+    ).interactive()
 
-    st.subheader("🧮 Prediksi Berdasarkan Input Pengguna")
+    st.altair_chart(chart, use_container_width=True)
+
+    # ===============================
+    # ===== INPUT GABUNGAN =====
+    # ===============================
+    st.subheader("🧠 Analisis Pelanggan Baru (Clustering + Regresi)")
 
     age = st.number_input("Umur Pelanggan", 1, 100, 30)
     income = st.number_input("Pendapatan Tahunan (k$)", 1, 200, 50)
 
-    if st.button("🔮 Prediksi Spending Score"):
-        hasil = rf.predict([[age, income]])
-        score = hasil[0]
+    if st.button("🔍 Analisis Pelanggan"):
+        # ---- CLUSTER PREDICTION ----
+        input_df = pd.DataFrame({
+            'Age': [age],
+            'Annual Income (k$)': [income]
+        })
 
-        if score < 40:
-            komentar = "Pelanggan memiliki tingkat pembelanjaan rendah."
-        elif score < 70:
-            komentar = "Pelanggan memiliki tingkat pembelanjaan sedang."
+        input_scaled = scaler.transform(input_df)
+        cluster_result = kmeans.predict(input_scaled)[0]
+
+        # ---- REGRESSION PREDICTION ----
+        spending_pred = rf.predict([[age, income]])[0]
+
+        # ===============================
+        # OUTPUT HASIL
+        # ===============================
+        st.success("✅ Hasil Analisis Pelanggan")
+
+        st.write(f"🧩 **Masuk Cluster** : **Cluster {cluster_result}**")
+        st.write(f"💰 **Prediksi Spending Score** : **{spending_pred:.2f}**")
+
+        # ===============================
+        # INTERPRETASI GABUNGAN
+        # ===============================
+        if spending_pred < 40:
+            level = "rendah"
+        elif spending_pred < 70:
+            level = "sedang"
         else:
-            komentar = "Pelanggan dengan tingkat pembelanjaan tinggi (loyal/premium)."
+            level = "tinggi"
 
-        st.success(f"✨ Perkiraan Spending Score: {score:.2f}")
-        st.info(f"📌 Interpretasi: {komentar}")
+        if cluster_result == 0:
+            profil = "pelanggan usia muda dengan pendapatan menengah"
+        elif cluster_result == 1:
+            profil = "pelanggan berpendapatan tinggi (potensial premium)"
+        elif cluster_result == 2:
+            profil = "pelanggan usia lebih tua dengan pendapatan rendah–menengah"
+        else:
+            profil = "pelanggan usia menengah dengan pendapatan tinggi"
+
+        st.info(
+            f"📌 **Kesimpulan:** Pelanggan ini termasuk {profil} "
+            f"dengan tingkat pembelanjaan **{level}**."
+        )
+
+    # ===============================
+    # METRIK REGRESI (OPSIONAL)
+    # ===============================
+    st.subheader("📊 Evaluasi Model Regresi")
+
+    y_pred = rf.predict(X_test)
+    rmse = mean_squared_error(y_test, y_pred) ** 0.5
+    r2 = r2_score(y_test, y_pred)
+
+    st.write(f"📉 RMSE : {rmse:.2f}")
+    st.write(f"📈 R² Score : {r2:.3f}")
