@@ -12,12 +12,12 @@ from sklearn.metrics import mean_squared_error, r2_score
 # KONFIGURASI HALAMAN
 # ===============================
 st.set_page_config(
-    page_title="Analisis Pelanggan Mall",
+    page_title="Analisis Pelanggan Swalayan",
     page_icon="🛍️",
     layout="wide"
 )
 
-st.title("🛍️ Analisis Pelanggan Mall")
+st.title("🛍️ Analisis Pelanggan Swalayan")
 st.write("""
 Aplikasi ini melakukan **analisis gabungan**:
 - **Clustering** untuk segmentasi pelanggan
